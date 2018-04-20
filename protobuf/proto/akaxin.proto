@@ -1,0 +1,10 @@
+syntax = "proto3";
+option java_outer_classname="Akaxin";
+
+message Request {
+ repeated int32 numbers = 1;
+}
+
+message Response {
+   map<int32, bool> msg = 1;
+}
