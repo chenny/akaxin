@@ -1,22 +1,11 @@
 package com.network.protobuf;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URL;
-import java.net.URLConnection;
 
 public class Server implements Runnable{
 	public static void main(String[]args) throws Exception {
@@ -33,38 +22,38 @@ public class Server implements Runnable{
 	                //等待client的请求
 	                System.out.println("socket:<----------->start");
 	                Socket socket = server.accept();
-	                DataInputStream in = new DataInputStream(socket.getInputStream());
-	               // Akaxin.Request artemp = Akaxin.Request.parseFrom(ByteToInputStream.input2byte(in)); 
+	                InputStream is  =socket.getInputStream();
+	                DataInputStream in = new DataInputStream(is);
 	                System.out.println("socket:<----------->receive");
-	                HttpUtil http = new HttpUtil();
-	                byte[] bytes = http.post("http://localhost:8080/protobuf/check", ByteToInputStream.input2byte(in));
-	                Akaxin.Response res = Akaxin.Response.parseFrom(bytes);
-	                System.out.println(res.toString());
-	                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-	                out.write(bytes);      
-	                out.flush();
-	                socket.close();
+	                ZalyHttpClient http = ZalyHttpClient.getInstance();
+	        		
+	                byte[] responseBytes = http.postBytes("http://localhost:8080/protobuf/check", ByteToInputStream.input2byte(in));
+	        		
+	        		
+	        		
+	        		
+//	                Akaxin.Request req_data = Akaxin.Request.parseFrom(ByteToInputStream.input2byte(in));
+//	                Akaxin.Response.Builder arb =Akaxin.Response.newBuilder();
+//	                for(int i=0;i<req_data.getNumbersCount();i++) {
+//	        			int num = req_data.getNumbers(i);
+//	        			arb.putMsg(num, isPrimeNumber(num));
+//	        		}
+//	        		Akaxin.Response ar = arb.build();
+	        		//System.out.println(ar.toString());
+	        		OutputStream outputStream = socket.getOutputStream();
+	        		outputStream.write(responseBytes);
 	                System.out.println("socket:<----------->finsh");
+	                outputStream.flush();
+	                outputStream.close();
 	            }
 	        } catch (IOException e) {
 	            e.printStackTrace();
 	        }
 	}
 	
-	
-	public static InputStream post(byte[] bs) throws IOException {
-		 URL url = new URL("http://localhost:8080/protobuf/check");  
-         HttpURLConnection huc = (HttpURLConnection) url.openConnection();  
-         huc.setRequestProperty("encoding", "utf-8");  
-         huc.setDoInput(true);  
-         huc.setDoOutput(true);  
-         huc.setRequestMethod("POST");  
-         OutputStream os = huc.getOutputStream();  
-         huc.getOutputStream().write(bs);
-         os.close();  
-         InputStream is = huc.getInputStream();  
-         return is;
-	}
+	//判断一个数是否是质数（素数）  
+
+
 	
 	
 

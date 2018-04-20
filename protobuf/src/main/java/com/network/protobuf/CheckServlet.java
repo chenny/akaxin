@@ -3,7 +3,6 @@ package com.network.protobuf;
 import java.io.IOException;
 import java.io.InputStream;
 
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,19 +19,16 @@ public class CheckServlet extends HttpServlet{
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		super.doPost(req, resp);
-		resp.setContentType("text/html;charset=UTF-8");
 		InputStream is = req.getInputStream();
-		//Akaxin.Request.Builder builder = Akaxin.Request.newBuilder();
 		Akaxin.Response.Builder arb =Akaxin.Response.newBuilder();
 		Akaxin.Request req_data = Akaxin.Request.parseFrom(ByteToInputStream.input2byte(is));
 		for(int i=0;i<req_data.getNumbersCount();i++) {
 			int num = req_data.getNumbers(i);
-			arb.putMsg(num, isPrimeNumber(num));
+			arb.putMsg(i, isPrimeNumber(num));
 		}
 		Akaxin.Response ar = arb.build();
-		System.out.println(ar.toString());
-		resp.getOutputStream().write(ar.toByteArray());	
+		//System.out.println(ar.toString());
+		ar.writeTo(resp.getOutputStream());
 	}
 	
 	
