@@ -6,55 +6,62 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-public class Server implements Runnable{
-	public static void main(String[]args) throws Exception {
-		Server server = new Server();
-		server.run();
+public class Server {
+	public static void main(String[] args) throws Exception {
+		ServerSocket server = new ServerSocket(10086);
+		Socket socket = null;
+		Executor executor = Executors.newFixedThreadPool(4);
+		while(true) {
+			socket =server.accept();
+			executor.execute(new ServerThread(socket));
+		}
 	}
+	public static class ServerThread extends Thread {
+		private Socket socket;
 
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		 try {
-	            ServerSocket server = new ServerSocket(10086);
-	            while (true) {
-	                //等待client的请求
-	                System.out.println("socket:<----------->start");
-	                Socket socket = server.accept();
-	                InputStream is  =socket.getInputStream();
-	                DataInputStream in = new DataInputStream(is);
-	                System.out.println("socket:<----------->receive");
-	                ZalyHttpClient http = ZalyHttpClient.getInstance();
-	        		
-	                byte[] responseBytes = http.postBytes("http://localhost:8080/protobuf/check", ByteToInputStream.input2byte(in));
-	        		
-	        		
-	        		
-	        		
-//	                Akaxin.Request req_data = Akaxin.Request.parseFrom(ByteToInputStream.input2byte(in));
-//	                Akaxin.Response.Builder arb =Akaxin.Response.newBuilder();
-//	                for(int i=0;i<req_data.getNumbersCount();i++) {
-//	        			int num = req_data.getNumbers(i);
-//	        			arb.putMsg(num, isPrimeNumber(num));
-//	        		}
-//	        		Akaxin.Response ar = arb.build();
-	        		//System.out.println(ar.toString());
-	        		OutputStream outputStream = socket.getOutputStream();
-	        		outputStream.write(responseBytes);
-	                System.out.println("socket:<----------->finsh");
-	                outputStream.flush();
-	                outputStream.close();
-	            }
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
+		public ServerThread(Socket socket) {
+			super();
+			this.socket = socket;
+		}
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			long start = System.currentTimeMillis();
+			InputStream is = null;
+			DataInputStream in = null;
+			try {
+				is = socket.getInputStream();
+				in = new DataInputStream(is);
+				ZalyHttpClient http = ZalyHttpClient.getInstance();
+				byte[] responseBytes = http.postBytes("http://localhost:8080/protobuf/check",
+						ByteToInputStream.input2byte(in));
+				OutputStream outputStream = socket.getOutputStream();
+				outputStream.write(responseBytes);
+				outputStream.flush();
+				System.out.println(Thread.currentThread()+"server cost:"+(System.currentTimeMillis()-start)+"ms");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally {
+				try {
+					if (is != null) {
+						is.close();
+					}
+					if (in!=null) {
+						in.close();
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+
+		}
+
 	}
-	
-	//判断一个数是否是质数（素数）  
-
-
-	
-	
-
 }

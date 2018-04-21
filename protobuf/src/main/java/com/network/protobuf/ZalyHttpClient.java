@@ -2,6 +2,7 @@ package com.network.protobuf;
 
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import com.squareup.okhttp.Response;
 public class ZalyHttpClient {
 	private static final Logger logger = LoggerFactory.getLogger(ZalyHttpClient.class);
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-	private static final OkHttpClient httpClient = new OkHttpClient();
+	private static OkHttpClient httpClient;
 
 	private static ZalyHttpClient instance = new ZalyHttpClient();
 
@@ -23,6 +24,10 @@ public class ZalyHttpClient {
 	}
 
 	public static ZalyHttpClient getInstance() {
+		httpClient  = new OkHttpClient();
+		httpClient.setConnectTimeout(150, TimeUnit.SECONDS);
+		httpClient.setReadTimeout(150, TimeUnit.SECONDS);
+		httpClient.setWriteTimeout(150, TimeUnit.SECONDS);
 		return instance;
 	}
 
@@ -66,6 +71,7 @@ public class ZalyHttpClient {
 		RequestBody postBody = RequestBody.create(JSON, bytes);
 		Request request = new Request.Builder().url(url).post(postBody).build();
 		Response response = httpClient.newCall(request).execute();
+	
 		if (response.isSuccessful()) {
 			return response.body().bytes();
 		} else {
