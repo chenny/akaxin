@@ -9,8 +9,13 @@ import java.net.Socket;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Server {
+	private static final Logger logger = LoggerFactory.getLogger(Server.class);
 	public static void main(String[] args) throws Exception {
+		logger.info("Server ready");
 		ServerSocket server = new ServerSocket(10086);
 		Socket socket = null;
 		Executor executor = Executors.newFixedThreadPool(4);
@@ -29,12 +34,13 @@ public class Server {
 
 		@Override
 		public void run() {
+			logger.info("Server start");
 			// TODO Auto-generated method stub
-			long start = System.currentTimeMillis();
 			InputStream is = null;
 			DataInputStream in = null;
 			try {
 				is = socket.getInputStream();
+				logger.info("Server receive from client");
 				in = new DataInputStream(is);
 				ZalyHttpClient http = ZalyHttpClient.getInstance();
 				byte[] responseBytes = http.postBytes("http://localhost:8080/protobuf/check",
@@ -42,7 +48,7 @@ public class Server {
 				OutputStream outputStream = socket.getOutputStream();
 				outputStream.write(responseBytes);
 				outputStream.flush();
-				System.out.println(Thread.currentThread()+"server cost:"+(System.currentTimeMillis()-start)+"ms");
+				logger.info("Server send to client");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
