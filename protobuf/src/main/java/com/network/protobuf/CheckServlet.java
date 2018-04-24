@@ -30,18 +30,14 @@ public class CheckServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		InputStream is = req.getInputStream();
-		logger.info("Server-Prime-Checker receive msg");
 		Akaxin.Request req_data = Akaxin.Request.parseFrom(is);
 		Akaxin.Response.Builder arb = Akaxin.Response.newBuilder();
 		int i = 0;
-		logger.info("Server-Prime-Checker start to change");
 		for (int num : req_data.getNumbersList()) {
 			arb.putMsg(i, isPrimeNumber(num));
 			i++;
 		}
-		logger.info("Server-Prime-Checker change finish");
 		Akaxin.Response ar = arb.build();
-		logger.info("Server-Prime-Checker send to server");
 		ar.writeTo(resp.getOutputStream());
 	}
 

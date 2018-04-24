@@ -1,144 +1,92 @@
 package com.network.protobuf;
 
-import java.io.DataOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Client extends Thread {
+public class Client {
 	private static final Logger logger = LoggerFactory.getLogger(Client.class);
 	Socket socket = null;
-	private static Akaxin.Request request;
-	private static Akaxin.Response.Builder responseBuilder = Akaxin.Response.newBuilder();
-	private static final int TIME = 4;
-	private int ti;
-
-	public Client(int ti) {
-		super();
-		this.ti = ti;
-	}
-
-	@Override
-	public void run() {
-		logger.info("client start");
-		InputStream is = null;
-		int size = request.getNumbersCount();
-		try {
-			socket = new Socket("192.168.3.24", 10086);
-			Akaxin.Request.Builder builder = Akaxin.Request.newBuilder();
-			builder.addAllNumbers(request.getNumbersList().subList(size / TIME * ti, size / TIME * (ti + 1)));
-			byte[] messageBody = builder.build().toByteArray();
-			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-			out.write(messageBody);
-			out.flush();
-			socket.shutdownOutput();
-			int receiveTimes = 0;
-			is = socket.getInputStream();
-			while (receiveTimes == 0) {
-				Akaxin.Response ar = Akaxin.Response.parseFrom(is);
-				if (ar.getMsgCount() > 0) {
-					responseBuilder.putAllMsg(ar.getMsgMap());
-					logger.info("client msg receive from server and the size is" + ar.getMsgCount());
-					receiveTimes++;
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			try {
-				if (socket != null)
-					socket.close();
-				if (is != null)
-					is.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
 
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-		// creatNumbers();
-		request = createInMemory(30000000);
-		new Client(0).start();
-		new Client(1).start();
-		new Client(2).start();
-		new Client(3).start();
-//		Executor executor = Executors.newFixedThreadPool(4);
-//		executor.execute(new Client(0));
-//		executor.execute(new Client(1));
-//		executor.execute(new Client(2));
-//		executor.execute(new Client(3));
+		Socket socket = new Socket("192.168.3.24", 10086);
+		new SendThread(socket).start();
 
 	}
 
-	// public static void creatNumbers() throws IOException {
-	// long start = System.currentTimeMillis();
-	// System.out.println("create start:"+start);
-	// File fout = new File("out.txt");
-	// FileOutputStream fos = new FileOutputStream(fout);
-	// BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-	// for (int i = 0; i < 100000000; i++) {
-	// bw.write(i + "." + ((int) (Math.random() * 100000)) + "");
-	// bw.newLine();
-	// }
-	// System.out.println("create
-	// finishe:"+(System.currentTimeMillis()-start)+"ms");
-	// bw.close();
-	// }
-	//
-	// public static int writeData(Akaxin.Response resp, List<Num> nums, long
-	// startTime) throws IOException {
-	// File fout = new File("outdata.txt");
-	// FileOutputStream fos = new FileOutputStream(fout);
-	// BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-	// long finishTime = System.currentTimeMillis();
-	// System.out.println("it is cost:" + (finishTime - startTime) + "ms");
-	// for (int i = 0; i < nums.size(); i++) {
-	// bw.write(nums.get(i).getId() + " " + nums.get(i).getNum() + " "
-	// + resp.getMsgMap().get(nums.get(i).getId()) + " " + (finishTime - startTime)
-	// + "ms");
-	// bw.newLine();
-	// }
-	// // bw.write(resp.toString());
-	// bw.close();
-	// return 1;
-	// }
-	//
-	// private static List<Num> read() throws IOException {
-	// long start = System.currentTimeMillis();
-	// System.out.println("read start:"+start);
-	// List<Num> list = new ArrayList<>();
-	// FileInputStream fis = new FileInputStream(new File("out.txt"));
-	// BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-	// String line = null;
-	// // int thisGetNum = 0;
-	// while ((line = br.readLine()) != null) {
-	// // thisGetNum++;
-	// int id = Integer.parseInt(line.substring(0, line.lastIndexOf(".")));
-	// int num = Integer.parseInt(line.substring(line.lastIndexOf(".") + 1,
-	// line.length()));
-	// list.add(new Num(id, num));
-	// //
-	// }
-	// System.out.println("read finishe"+(System.currentTimeMillis()-start)+"ms");
-	// return list;
-	// }
+	public static class SendThread extends Thread {
+		private Socket socket;
+		public List<Integer> mList = new ArrayList<>();
 
-	private static Akaxin.Request createInMemory(int createNum) {
-		logger.info("createInMemory");
-		Akaxin.Request.Builder builder = Akaxin.Request.newBuilder();
-		for (int i = 0; i < createNum; i++) {
-			builder.addNumbers(((int) (Math.random() * 100000)));
+		public SendThread(Socket socket) {
+			super();
+			this.socket = socket;
 		}
-		logger.info("createInMemory finish");
-		return builder.build();
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			while (true) {
+				try {
+					logger.info("client start");
+					OutputStream outputStream = socket.getOutputStream();
+					File inputFile = new File("input.txt");
+					PrintWriter bufw = new PrintWriter(outputStream, true);
+					BufferedInputStream bis = new BufferedInputStream(new FileInputStream(inputFile));
+					BufferedReader in = new BufferedReader(new InputStreamReader(bis, "utf-8"), 10 * 1024 * 1024);// 10M缓存
+					String line = null;
+					while (in.ready()) {
+						line = in.readLine();
+						String[] split = line.split("!");
+						mList.add(Integer.parseInt(split[1]));
+						// logger.info(line);
+						bufw.println(line);
+						bufw.flush();
+					}
+					bufw.println("end");
+					bufw.flush();
+					in.close();
+
+					File outputFile = new File("out.txt");
+					FileWriter fw = new FileWriter(outputFile);
+
+					InputStream inputStream = socket.getInputStream();
+					BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+					int i = 0;
+					while ((line = bufferedReader.readLine()) != null) {
+						logger.info(""+i);
+						fw.write(i + "!" + mList.get(i) + "!" + line);
+						fw.write("\n");
+						fw.flush();
+						i++;
+					}
+					fw.close();
+					logger.info("client finished");
+					socket.shutdownOutput();
+					socket.close();
+					break;
+				} catch (Exception e) {
+
+				}
+			}
+		}
+
 	}
+	
+	
+
 }
